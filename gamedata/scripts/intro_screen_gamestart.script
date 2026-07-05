@@ -1,0 +1,127 @@
+-- =============================================================
+-- Serious Intro Screen
+-- File purpose: documented by ChatGPT
+-- This file contains runtime logic for the intro system.
+-- Comments added for maintainability.
+-- =============================================================
+-- Handles game events (save load, level change, death)
+-- and decides when the intro should be shown.
+local is_traveling = false
+
+local INTRO_REASON_SAVE_LOAD = "save_load"
+local INTRO_REASON_LEVEL_CHANGE = "level_change"
+local INTRO_REASON_DEATH = "death"
+
+local last_killer_obj = nil
+
+local function mcm_bool(key, default)
+    local cfg = serious_intro_screen_mcm and serious_intro_screen_mcm.get_config
+    local value = cfg and cfg(key)
+
+    if value == nil then
+        return default
+    end
+
+    if value == true or value == 1 or value == "1" or value == "true" then
+        return true
+    end
+
+    if value == false or value == 0 or value == "0" or value == "false" then
+        return false
+    end
+
+    return default
+end
+
+local function is_intro_enabled_for(reason)
+    if reason == INTRO_REASON_LEVEL_CHANGE then
+        return mcm_bool("enable_level_change_intro", true)
+    elseif reason == INTRO_REASON_DEATH then
+        return mcm_bool("enable_death_intro", true)
+    end
+
+    return mcm_bool("enable_save_load_intro", true)
+end
+
+-- Ребилд бай Килиманджаро. Функция, которая "поднимает флаг" перед сменой уровня
+function on_level_travel()
+    is_traveling = true
+end
+
+-- Основная функция показа интро.
+-- Теперь интро работает и при обычной загрузке сейва, и при переходе между локациями.
+-- Разница передается во второй скрипт через параметр start(intro_reason):
+-- "save_load"    = обычная загрузка сейва, затемнение остается;
+-- "level_change" = переход между локациями, затемнения и фона нет.
+function ShowIntroText()
+    local traveling_now = is_traveling or false
+    local intro_reason = traveling_now and INTRO_REASON_LEVEL_CHANGE or INTRO_REASON_SAVE_LOAD
+
+    -- Сбрасываем флаг сразу после чтения, чтобы следующая обычная загрузка снова была с затемнением.
+    if is_traveling then
+        is_traveling = false
+    end
+
+    -- MCM позволяет отдельно отключать интро для загрузки сейва и для смены локации.
+    if not is_intro_enabled_for(intro_reason) then
+        return
+    end
+
+    -- ui_intro_screen.start() сам показывает окно через Trigger().
+    -- Важно: не вызываем ShowDialog(true) отсюда, иначе при переходе между локациями
+    -- окно снова станет modal/dialog и перехватит мышь.
+    if ui_intro_screen then
+        ui_intro_screen.start(intro_reason)
+    end
+
+    -- Этот коллбэк больше не нужен после первого показа, но его удаление опционально
+    -- и не влияет на основную логику, так как флаг is_traveling всё контролирует.
+    -- UnregisterScriptCallback("on_loading_screen_dismissed", ShowIntroText)
+end
+
+-- Интро смерти игрока. Используем отдельную причину, чтобы UI мог собрать
+-- отдельный набор строк и работать через тот же non-modal overlay, что и смена локации.
+function on_actor_before_death()
+    local intro_reason = INTRO_REASON_DEATH
+
+    if not is_intro_enabled_for(intro_reason) then
+        return
+    end
+
+    if ui_intro_screen then
+        ui_intro_screen.set_last_killer(last_killer_obj)
+        ui_intro_screen.start(intro_reason)
+    end
+end
+
+function on_actor_before_hit(s_hit)
+    if s_hit and s_hit.draftsman then
+        last_killer_obj = s_hit.draftsman
+    end
+
+end
+
+function on_actor_death()
+    last_killer_obj = nil
+end
+
+-- Сохраняем состояние флага в сейв
+function save_state(m_data)
+    m_data.sis_is_traveling = is_traveling or false
+end
+
+-- Загружаем состояние флага из сейва
+function load_state(m_data)
+    is_traveling = m_data.sis_is_traveling or false
+end
+
+-- Регистрируем все необходимые коллбэки
+function on_game_start()
+    RegisterScriptCallback("on_loading_screen_dismissed", ShowIntroText)
+    RegisterScriptCallback("on_before_level_changing", on_level_travel)
+    RegisterScriptCallback("actor_on_before_death", on_actor_before_death)
+    RegisterScriptCallback("actor_on_before_hit", on_actor_before_hit)
+    RegisterScriptCallback("actor_on_death", on_actor_death)
+    RegisterScriptCallback("save_state", save_state)
+    RegisterScriptCallback("load_state", load_state)
+end

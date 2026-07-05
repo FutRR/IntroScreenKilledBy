@@ -1,0 +1,468 @@
+-- =============================================================
+-- Serious Intro Screen
+-- File purpose: documented by ChatGPT
+-- This file contains runtime logic for the intro system.
+-- Comments added for maintainability.
+-- =============================================================
+-- Main UI implementation.
+-- Creates overlay, builds text, plays typing animation and fade.
+GUI = nil
+local gc = game.translate_string
+local config = serious_intro_screen_mcm.get_config
+local typeAnimSpeed = config and tonumber(config("type_anim_speed")) or 0
+
+local INTRO_REASON_SAVE_LOAD = "save_load"
+local INTRO_REASON_LEVEL_CHANGE = "level_change"
+local INTRO_REASON_DEATH = "death"
+
+function start(intro_reason)
+    -- Do not modify HUD/inventory and do not take control away from the player.
+    -- The intro works as an overlay on top of gameplay.
+
+    if (not GUI) then
+        GUI = UIIntroScreen()
+    end
+
+    if (GUI) and (not GUI:IsShown()) then
+        GUI:Reset(intro_reason)
+
+        -- IMPORTANT для переходов между локациями:
+        -- регистрируем UI ДО показа. Тогда окно можно показать как обычный overlay
+        -- через Show(true), без ShowDialog(true), а значит без курсора и без захвата мыши.
+        Register_UI("UIIntroScreen", "intro_screen")
+        GUI:Trigger()
+    end
+
+    return GUI
+end
+
+class "UIIntroScreen"(CUIScriptWnd)
+
+function UIIntroScreen:__init()
+    super()
+    self:InitControls()
+end
+
+function UIIntroScreen:__finalize()
+end
+
+function UIIntroScreen:InitControls()
+    self:SetWndRect(Frect():set(0, 0, 5000, 5000))
+    self:SetAutoDelete(true)
+    self.xml = CScriptXmlInit()
+    local xml = self.xml
+    xml:ParseFile("ui_intro_screen_16.xml")
+
+    self.dialog = xml:InitStatic("intro", self)
+    -- Управление всегда остается у игрока.
+    self:AllowMovement(true)
+    self.bgTexture = xml:InitStatic("intro:background", self.dialog)
+    self.txt = xml:InitTextWnd("intro:txt", self.dialog)
+end
+
+function UIIntroScreen:Reset(intro_reason)
+    -- Поддерживаем старый bool-параметр на случай сторонних вызовов:
+    -- true = смена локации, false/nil = загрузка сейва.
+    if intro_reason == true then
+        intro_reason = INTRO_REASON_LEVEL_CHANGE
+    elseif intro_reason == false or intro_reason == nil then
+        intro_reason = INTRO_REASON_SAVE_LOAD
+    end
+
+    self.intro_reason = intro_reason
+    self.is_traveling = intro_reason == INTRO_REASON_LEVEL_CHANGE
+    self.is_death = intro_reason == INTRO_REASON_DEATH
+    self.use_hud_render = self.is_traveling or self.is_death
+    self.typed_text = ""
+    self.current_index = 1
+
+    if typeAnimSpeed and typeAnimSpeed == 2 then
+        self.type_speed = 0.06
+    elseif typeAnimSpeed and typeAnimSpeed == 1 then
+        self.type_speed = 0.03
+    else
+        self.type_speed = 0.01
+    end
+
+    self.typing_complete = false
+    self.finish_started = false
+    self.time_elapsed = 0
+
+    local ambient_sound_choice = config and tonumber(config("ambient_sound")) or 0
+    local typing_sound_choice = config and tonumber(config("typing_sound")) or 0
+
+    if ambient_sound_choice == 0 then
+        ambient_sound_choice = math.random(1, 7)
+    end
+
+    if typing_sound_choice == 0 then
+        typing_sound_choice = math.random(1, 5)
+    end
+
+    local intro_sound_path = "introscreen\\intro\\intro" .. ambient_sound_choice
+    local typing_sound_path = "introscreen\\typing\\typing" .. typing_sound_choice
+
+    self.snd_intro = sound_object(intro_sound_path)
+    self.snd_typing = sound_object(typing_sound_path)
+
+    -- Повторно гарантируем, что окно не блокирует управление после Reset().
+    self:AllowMovement(true)
+
+    local exclusionZoneTxt = gc("sis_exclusion_zone_txt")
+    local lvlUiName = gc(level.name())
+    local dateTime = GetDateTime()
+    local actorName = db.actor:character_name()
+    local namePrefix = gc("sis_actor_name_prefix")
+    local rankPrefix = gc("sis_actor_rank_prefix")
+    local factionPrefix = gc("sis_actor_faction_prefix")
+    local statusPrefix = gc("sis_actor_status_prefix")
+    local statusTerminated = gc("sis_actor_status_terminated")
+    local killerPrefix = gc("sis_killer_prefix")
+    local killerName = get_killer_name()
+
+    local faction_id = get_actor_true_community()
+    local faction = gc("actor_" .. faction_id)
+
+    local rank = gc("st_rank_" .. ranks.get_obj_rank_name(db.actor))
+
+    if self.is_death then
+        self.fullDispMsg = exclusionZoneTxt .. " " .. lvlUiName .. "~" .. dateTime .. "~" .. namePrefix .. " " ..
+                               actorName .. "~" .. statusPrefix .. " " .. statusTerminated .. "~" .. killerPrefix .. " " ..
+                               killerName
+    else
+        self.fullDispMsg = exclusionZoneTxt .. " " .. lvlUiName .. "~" .. dateTime .. "~" .. namePrefix .. " " ..
+                               actorName .. "~" .. rankPrefix .. " " .. rank .. "~" .. factionPrefix .. " " .. faction
+    end
+
+    if self.is_death then
+        self.txt:SetText(statusPrefix .. " " .. statusTerminated .. "~" .. killerPrefix .. " " .. killerName)
+    else
+        self.txt:SetText(rankPrefix .. " " .. rank .. "~" .. factionPrefix .. " " .. faction)
+    end
+    self.txt:SetTextColor(GetARGB(255, 255, 255, 255))
+
+    -- Обычная загрузка сейва: затемнение/фон остается.
+    -- Переход между локациями и смерть игрока: фон полностью скрыт, остается только текст поверх игры.
+    if self.is_traveling or self.is_death then
+        self.bgTexture:SetTextureColor(GetARGB(0, 255, 255, 255))
+        self.bgTexture:Show(false)
+    else
+        self.bgTexture:SetTextureColor(GetARGB(255, 255, 255, 255))
+        self.bgTexture:Show(true)
+    end
+
+    -- На переходах между локациями сдвигаем текст левее для ультравайда.
+    -- При обычной загрузке сейва оставляем исходную позицию из ui_intro_screen_16.xml.
+    if self.is_traveling then
+        self.txt:SetWndPos(vector2():set(220, 273))
+    else
+        self.txt:SetWndPos(vector2():set(350, 273))
+    end
+
+    self.txt:Show(true)
+end
+
+function UIIntroScreen:Update()
+    CUIScriptWnd.Update(self)
+
+    -- Save/Load: прячем курсор грязным, но стабильным хаком — каждый кадр уводим его за экран.
+    if self.intro_reason == INTRO_REASON_SAVE_LOAD and SetCursorPosition then
+        pcall(function()
+            SetCursorPosition(vector2():set(0, 1000))
+        end)
+    end
+
+    -- При переходе между локациями окно показывается как dialog, чтобы текст точно был виден,
+    -- но каждый кадр возвращаем input игре, чтобы камера/мышь не блокировались.
+    if self.use_hud_render and level and level.enable_input then
+        pcall(level.enable_input)
+    end
+end
+
+function UIIntroScreen:TypeTxt()
+    -- При переходе между локациями и смерти игрока не показываем затемняющий фон.
+    -- При загрузке сейва оставляем оригинальное затемнение.
+    if self.is_traveling or self.is_death then
+        self.bgTexture:Show(false)
+    else
+        self.bgTexture:Show(true)
+    end
+    self.txt:Show(true)
+    CreateTimeEvent("intro_screen", "type", self.type_speed, Type, self)
+end
+
+function UIIntroScreen:Trigger()
+    if self.use_hud_render then
+        -- Смена локации и смерть игрока: рисуем окно через HUD render-слой.
+        -- Это не открывает UI-dialog, поэтому не появляется курсор и мышь остается у камеры.
+        self:AllowMovement(true)
+        self:Enable(true)
+        self:Show(true)
+
+        self.added_to_hud_render = false
+        if get_hud then
+            local hud = get_hud()
+            if hud and hud.AddDialogToRender then
+                pcall(function()
+                    hud:AddDialogToRender(self)
+                end)
+                self.added_to_hud_render = true
+            end
+        end
+
+        -- Fallback только на случай, если в конкретной сборке нет AddDialogToRender.
+        -- В GAMMA/Anomaly этот метод обычно есть, и именно он нужен для текста без захвата мыши.
+        if not self.added_to_hud_render then
+            self:ShowDialog(true)
+        end
+
+        if level and level.enable_input then
+            pcall(level.enable_input)
+        end
+    else
+        -- Обычная загрузка сейва: оставляем полноценное интро с затемнением.
+        self:Enable(true)
+        self:ShowDialog(true)
+    end
+
+    self:TypeTxt()
+
+    -- Ambient/music проигрываем только для Save/Load.
+    -- Для Level Change и Death оставляем только короткие звуки печатания в Type().
+    if self.intro_reason == INTRO_REASON_SAVE_LOAD and self.snd_intro then
+        self.snd_intro:play(nil, 0, sound_object.s2d)
+    end
+end
+
+function UIIntroScreen:OnKeyboard(dik, keyboard_action)
+    local res = CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+    if (res == false) then
+
+        local bind = dik_to_bind(dik)
+        if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+            if dik == DIK_keys.DIK_ESCAPE then
+                if self.intro_reason == INTRO_REASON_SAVE_LOAD then
+                    self:FinishWithFade()
+                else
+                    self:OnCancel()
+                end
+            end
+        end
+    end
+    return res
+end
+
+function UIIntroScreen:FinishWithFade()
+    if self.finish_started then
+        return true
+    end
+
+    self.finish_started = true
+    RemoveTimeEvent("intro_screen", "type")
+
+    if self.snd_intro and self.snd_intro:playing() then
+        self.snd_intro:stop()
+    end
+
+    -- Мгновенно допечатываем текст и запускаем обычный Save/Load fade.
+    self.typed_text = string.gsub(self.fullDispMsg or "", "~", "\n")
+    self.current_index = #(self.fullDispMsg or "") + 1
+    self.typing_complete = true
+    self.txt:SetText(self.typed_text)
+    self.bgTexture:Show(true)
+    self.txt:Show(true)
+
+    stolen_from_catspaws_secret_lab.fade_texture(self.bgTexture, 2000, nil, false, self.OnNaturalEnd, self)
+    stolen_from_catspaws_secret_lab.fade_texture(self.txt, 2000, linearThenAccelerate, true)
+
+    return true
+end
+
+function UIIntroScreen:RemoveFromHudRender()
+    if self.added_to_hud_render and get_hud then
+        local hud = get_hud()
+        if hud and hud.RemoveDialogToRender then
+            pcall(function()
+                hud:RemoveDialogToRender(self)
+            end)
+        end
+    end
+    self.added_to_hud_render = false
+end
+
+function UIIntroScreen:OnCancel(obj)
+    if self.snd_intro and self.snd_intro:playing() then
+        self.snd_intro:stop()
+    end
+
+    if self.use_hud_render then
+        self:RemoveFromHudRender()
+        self:Show(false)
+    elseif obj then
+        obj:HideDialog()
+    else
+        self:HideDialog()
+    end
+
+    Unregister_UI("UIIntroScreen")
+    return true
+end
+
+function UIIntroScreen:OnNaturalEnd(obj)
+    if self.use_hud_render then
+        self:RemoveFromHudRender()
+        self:Show(false)
+    elseif obj then
+        obj:HideDialog()
+    else
+        self:HideDialog()
+    end
+    Unregister_UI("UIIntroScreen")
+    return true
+end
+
+function Type(uiIntroScreen)
+    if uiIntroScreen.current_index <= #uiIntroScreen.fullDispMsg then
+        local msgSection = uiIntroScreen.fullDispMsg:sub(uiIntroScreen.current_index, uiIntroScreen.current_index)
+
+        if msgSection == "~" then
+            msgSection = "\\n"
+        end
+
+        uiIntroScreen.typed_text = uiIntroScreen.typed_text .. msgSection
+        uiIntroScreen.current_index = uiIntroScreen.current_index + 1
+
+        if uiIntroScreen.snd_typing and msgSection ~= " " and msgSection ~= "\\n" then
+            uiIntroScreen.snd_typing:play(nil, 0, sound_object.s2d)
+        end
+
+        local blink = (uiIntroScreen.current_index % 2 == 0) and "_" or " "
+        uiIntroScreen.txt:SetText(uiIntroScreen.typed_text .. blink)
+    end
+
+    if uiIntroScreen.current_index > #uiIntroScreen.fullDispMsg then
+        if uiIntroScreen.finish_started then
+            return true
+        end
+        uiIntroScreen.finish_started = true
+        uiIntroScreen.typing_complete = true
+        uiIntroScreen.txt:SetText(uiIntroScreen.typed_text)
+
+        if uiIntroScreen.is_traveling or uiIntroScreen.is_death then
+            -- На переходе между локациями и при смерти фейдим только текст, без затемнения экрана.
+            stolen_from_catspaws_secret_lab.fade_texture(uiIntroScreen.txt, 2000, linearThenAccelerate, true,
+                uiIntroScreen.OnNaturalEnd, uiIntroScreen)
+        else
+            -- При обычной загрузке сейва оставляем оригинальный фейд затемняющего фона.
+            stolen_from_catspaws_secret_lab.fade_texture(uiIntroScreen.bgTexture, 2000, nil, false,
+                uiIntroScreen.OnNaturalEnd, uiIntroScreen)
+            stolen_from_catspaws_secret_lab.fade_texture(uiIntroScreen.txt, 2000, linearThenAccelerate, true)
+        end
+
+        return true
+    end
+
+    RemoveTimeEvent("intro_screen", "type")
+    CreateTimeEvent("intro_screen", "type", uiIntroScreen.type_speed, Type, uiIntroScreen)
+end
+
+function linearThenAccelerate(x)
+    return math.pow(x, 0.5)
+end
+
+function GetDateTime()
+    local date = game.CTime().dateToString(game.get_game_time())
+    local timeOfDay = game.get_game_time()
+
+    local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
+    Y, M, D, h, m, s, ms = timeOfDay:get(Y, M, D, h, m, s, ms)
+
+    local hString = (h < 10) and ("0" .. h) or tostring(h)
+    local mString = (m < 10) and ("0" .. m) or tostring(m)
+
+    local uiTimeOfDay = hString .. ":" .. mString
+
+    return uiTimeOfDay .. " - " .. date
+end
+
+-- Tables copied from tagged_patches
+local mutant_sections = {
+    m_chimera_e = "chimera",
+    chimera_normal = "chimera",
+    chimera_normal2 = "chimera",
+    chimera_normal3 = "chimera",
+    chimera_weak = "chimera",
+    chimera_strong = "chimera",
+    chimera_strong2 = "chimera",
+    chimera_strong3 = "chimera",
+    chimera_strong4 = "chimera",
+    poltergeist_build = "poltergeist",
+    m_poltergeist_e = "poltergeist",
+    m_poltergeist_normal_tele = "poltergeist",
+    poltergeist_fake = "poltergeist",
+    pri_a25_poltergeist = "poltergeist",
+    labx8_poltergeist = "poltergeist",
+    m_poltergeist_normal_black = "pseudogeist",
+    m_poltergeist_normal_flame = "pyrogeist",
+    psy_dog = "psydog",
+    psy_dog_normal = "psydog",
+    psy_dog_phantom = "psydog"
+}
+
+local valid_mutant_community = {
+    dog = "blind_dog",
+    flesh = "flesh",
+    bloodsucker = "bloodsucker",
+    boar = "boar",
+    burer = "burer",
+    cat = "cat",
+    controller = "controller",
+    fracture = "fracture",
+    karlik = "karlik",
+    pseudodog = "pseudodog",
+    pseudo_gigant = "pseudogiant",
+    snork = "snork",
+    tushkano = "tushkano",
+    zombie = "zombie",
+    lurker = "lurker",
+    psysucker = "psysucker"
+}
+
+local killer = nil
+
+function set_last_killer(killer_obj)
+    killer = killer_obj
+end
+
+function get_mutant_name(mutant_obj)
+    if not mutant_obj then
+        return nil
+    end
+    local sec = mutant_obj:section()
+    if not sec then
+        return nil
+    end
+    if mutant_sections[sec] then
+        return gc("tagged_patches_" .. mutant_sections[sec])
+    end
+    local cmnt = ini_sys:r_string_ex(sec, "community")
+    if cmnt and valid_mutant_community[cmnt] then
+        return gc("tagged_patches_" .. valid_mutant_community[cmnt])
+    end
+    return nil
+end
+
+function get_killer_name()
+    local killer_name = nil
+
+    if killer then
+        if IsStalker(killer) then
+            killer_name = killer:character_name()
+        elseif IsMonster(killer) then
+            killer_name = get_mutant_name(killer)
+        end
+    end
+
+    return killer_name or gc("sis_killer_unknown")
+
+end

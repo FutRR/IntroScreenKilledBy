@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+    <string id="ui_mcm_menu_serious_intro_screen">
+        <text>Intro screen</text>
+    </string>
+    <string id="ui_intro_screen_sld">
+        <text>Intro screen</text>
+    </string>
+    <string id="ui_mcm_intro_screen_sld_text">
+        <text>Typing speed settings</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_type_anim_speed_desc">
+        <text>Sets how fast the intro text will be typed out.</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_type_anim_speed">
+        <text>Type animation speed</text>
+    </string>
+    <string id="ui_mcm_lst_ui_mcm_lst_default">
+        <text>Default</text>
+    </string>
+    <string id="ui_mcm_lst_ui_mcm_lst_slow">
+        <text>Slow</text>
+    </string>
+	<string id="ui_mcm_lst_ui_mcm_lst_cinematic">
+    <text>Cinematic</text>
+</string>
+		    <string id="ui_mcm_lst_Intro_1">
+        <text>Intro 1</text>
+    </string>
+		    <string id="ui_mcm_lst_Intro_2">
+        <text>Intro 2</text>
+    </string>
+		    <string id="ui_mcm_lst_Intro_3">
+        <text>Intro 3</text>
+    </string>
+		    <string id="ui_mcm_lst_Intro_4">
+        <text>Intro 4</text>
+    </string>
+		    <string id="ui_mcm_lst_Intro_5">
+        <text>Intro 5</text>
+    </string>
+		    <string id="ui_mcm_lst_Intro_6">
+        <text>Intro 6</text>
+    </string>
+		    <string id="ui_mcm_lst_Intro_7">
+        <text>Intro 7</text>
+    </string>
+			    <string id="ui_mcm_lst_Typing_1">
+        <text>Typing 1</text>
+    </string>		    <string id="ui_mcm_lst_Typing_2">
+        <text>Typing 2</text>
+    </string>		    <string id="ui_mcm_lst_Typing_3">
+        <text>Typing 3</text>
+    </string>
+	<string id="ui_mcm_lst_Typing_4">
+    <text>Typing 4</text>
+</string>
+<string id="ui_mcm_lst_Typing_5">
+    <text>Typing 5</text>
+</string>
+
+    <!-- NEW: Strings for sound selection -->
+    <string id="ui_mcm_sounds_title">
+        <text>Sound settings</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_ambient_sound">
+        <text>Intro Sound</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_typing_sound">
+        <text>Typing Sound</text>
+    </string>
+	<string id="ui_mcm_lst_Random">
+    <text>Random</text>
+</string>
+
+    <!-- String for the intro screen text -->
+    <string id="sis_exclusion_zone_txt">
+        <text>Chernobyl Exclusion Zone :</text>
+    </string>
+
+    <!-- Strings for actor info labels -->
+    <string id="sis_actor_name_prefix">
+        <text>Name:</text>
+    </string>
+    <string id="sis_actor_rank_prefix">
+        <text>Rank:</text>
+    </string>
+    <string id="sis_actor_faction_prefix">
+        <text>Faction:</text>
+    </string>
+    
+    <!-- Strings for intro event toggles -->
+    <string id="ui_mcm_intro_screen_events_sld_text">
+        <text>Intro event settings</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_enable_save_load_intro">
+        <text>Enable intro for Save/Load</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_enable_level_change_intro">
+        <text>Enable intro for Level Change</text>
+    </string>
+
+    <string id="sis_actor_status_prefix">
+        <text>Status:</text>
+    </string>
+    <string id="sis_actor_status_terminated">
+        <text>Terminated</text>
+    </string>
+    <string id="sis_killer_prefix">
+        <text>Killed by:</text>
+    </string>
+    <string id="sis_killer_unknown">
+        <text>Unknown</text>
+    </string>
+    <string id="ui_mcm_serious_intro_screen_enable_death_intro">
+        <text>Enable intro for Player Death</text>
+    </string>
+</string_table>
