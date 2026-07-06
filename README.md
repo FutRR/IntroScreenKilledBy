@@ -19,3 +19,9 @@ Load after the 3 requirements.
 ## Credits
 
 [[Head, Eyes] Death Screen](https://www.moddb.com/mods/stalker-anomaly/addons/head-eyes-death-screen) by eslider
+
+## Changelog
+
+- 0.1 (Release) : Added killer name for NPCs and Mutants
+- 0.2 : Added killer faction
+- 0.3 : Added anomaly type
