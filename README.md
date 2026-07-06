@@ -1,6 +1,6 @@
 # IntroScreenKilledBy
 
-This addon adds the NPC/Mutant name that killed you on the death screen.
+This addon adds the name and faction (if NPC) of the NPC/Mutant/Anomaly that killed you on the death screen.
 
 All credits go to Serious, 8BitCat and eslider
 
