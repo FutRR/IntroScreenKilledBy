@@ -17,6 +17,11 @@ local last_killer_obj = {
     name = nil
 }
 
+local last_anomaly_obj = {
+    cls_id = nil,
+    name = nil
+}
+
 local function mcm_bool(key, default)
     local cfg = serious_intro_screen_mcm and serious_intro_screen_mcm.get_config
     local value = cfg and cfg(key)
@@ -93,6 +98,7 @@ function on_actor_before_death()
 
     if ui_intro_screen then
         ui_intro_screen.set_last_killer(last_killer_obj)
+        ui_intro_screen.set_last_anomaly(last_anomaly_obj)
         ui_intro_screen.start(intro_reason)
     end
 end
@@ -110,11 +116,31 @@ function on_actor_before_hit(s_hit)
             end
         end
     end
+end
 
+function on_actor_feeling_anomaly(obj)
+    if obj then
+        last_anomaly_obj.cls_id = obj:clsid()
+        local sec = obj:section()
+
+        if string.find(sec, "electric") then
+            last_anomaly_obj.name = "electric"
+        elseif string.find(sec, "chemical") then
+            last_anomaly_obj.name = "chemical"
+        elseif string.find(sec, "thermal") then
+            last_anomaly_obj.name = "thermal"
+        elseif string.find(sec, "gravitational") then
+            last_anomaly_obj.name = "gravitational"
+        end
+    end
 end
 
 function on_actor_death()
     last_killer_obj = {
+        cls_id = nil,
+        name = nil
+    }
+    last_anomaly_obj = {
         cls_id = nil,
         name = nil
     }
@@ -134,6 +160,7 @@ end
 function on_game_start()
     RegisterScriptCallback("on_loading_screen_dismissed", ShowIntroText)
     RegisterScriptCallback("on_before_level_changing", on_level_travel)
+    RegisterScriptCallback("actor_on_feeling_anomaly", on_actor_feeling_anomaly)
     RegisterScriptCallback("actor_on_before_death", on_actor_before_death)
     RegisterScriptCallback("actor_on_before_hit", on_actor_before_hit)
     RegisterScriptCallback("actor_on_death", on_actor_death)

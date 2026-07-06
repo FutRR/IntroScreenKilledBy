@@ -109,15 +109,70 @@
     <string id="sis_killer_prefix">
         <text>Killed by:</text>
     </string>
+
     <string id="sis_killer_faction_prefix">
         <text>-</text>
     </string>
-    <string id="sis_killer_unknown">
-        <text>Unknown</text>
+    <string id="sis_killer_faction_stalker">
+        <text>Free Stalker</text>
     </string>
+    <string id="sis_killer_faction_bandit">
+        <text>Bandit</text>
+    </string>
+    <string id="sis_killer_faction_csky">
+        <text>Clear Sky</text>
+    </string>
+    <string id="sis_killer_faction_dolg">
+        <text>Duty</text>
+    </string>
+    <string id="sis_killer_faction_freedom">
+        <text>Freedom</text>
+    </string>
+    <string id="sis_killer_faction_army">
+        <text>Military</text>
+    </string>
+    <string id="sis_killer_faction_ecolog">
+        <text>Ecologist</text>
+    </string>
+    <string id="sis_killer_faction_killer">
+        <text>Mercenary</text>
+    </string>
+    <string id="sis_killer_faction_zombied">
+        <text>Zombified Stalker</text>
+    </string>
+    <string id="sis_killer_faction_monolith">
+        <text>Monolith</text>
+    </string>
+    <string id="sis_killer_faction_greh">
+        <text>Sin</text>
+    </string>
+    <string id="sis_killer_faction_isg">
+        <text>UNISG</text>
+    </string>
+    <string id="sis_killer_faction_renegade">
+        <text>Renegade</text>
+    </string>
+
     <string id="sis_killer_anomaly">
         <text>Anomaly</text>
     </string>
+    <string id="sis_killer_anomaly_electric">
+        <text>Electric Anomaly</text>
+    </string>
+    <string id="sis_killer_anomaly_chemical">
+        <text>Chemical Anomaly</text>
+    </string>
+    <string id="sis_killer_anomaly_thermal">
+        <text>Thermal Anomaly</text>
+    </string>
+    <string id="sis_killer_anomaly_gravitational">
+        <text>Gravitational Anomaly</text>
+    </string>
+
+    <string id="sis_killer_unknown">
+        <text>Unknown</text>
+    </string>
+
     <string id="ui_mcm_serious_intro_screen_enable_death_intro">
         <text>Enable intro for Player Death</text>
     </string>

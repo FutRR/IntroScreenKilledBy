@@ -7,7 +7,7 @@
 -- Main UI implementation.
 -- Creates overlay, builds text, plays typing animation and fade.
 GUI = nil
-local gc = game.translate_string
+local gt = game.translate_string
 local config = serious_intro_screen_mcm.get_config
 local typeAnimSpeed = config and tonumber(config("type_anim_speed")) or 0
 
@@ -108,25 +108,25 @@ function UIIntroScreen:Reset(intro_reason)
     -- Повторно гарантируем, что окно не блокирует управление после Reset().
     self:AllowMovement(true)
 
-    local exclusionZoneTxt = gc("sis_exclusion_zone_txt")
-    local lvlUiName = gc(level.name())
+    local exclusionZoneTxt = gt("sis_exclusion_zone_txt")
+    local lvlUiName = gt(level.name())
     local dateTime = GetDateTime()
     local actorName = db.actor:character_name()
-    local namePrefix = gc("sis_actor_name_prefix")
-    local rankPrefix = gc("sis_actor_rank_prefix")
-    local factionPrefix = gc("sis_actor_faction_prefix")
-    local statusPrefix = gc("sis_actor_status_prefix")
-    local statusTerminated = gc("sis_actor_status_terminated")
-    local killerPrefix = gc("sis_killer_prefix")
+    local namePrefix = gt("sis_actor_name_prefix")
+    local rankPrefix = gt("sis_actor_rank_prefix")
+    local factionPrefix = gt("sis_actor_faction_prefix")
+    local statusPrefix = gt("sis_actor_status_prefix")
+    local statusTerminated = gt("sis_actor_status_terminated")
+    local killerPrefix = gt("sis_killer_prefix")
     local killerName = get_killer_name()
-    local killerFactionPrefix = gc("sis_killer_faction_prefix")
+    local killerFactionPrefix = gt("sis_killer_faction_prefix")
     local killerFaction = get_killer_faction()
     local killerFactionSuffix = killerFaction and (killerFactionPrefix .. " " .. killerFaction) or ""
 
     local faction_id = get_actor_true_community()
-    local faction = gc("actor_" .. faction_id)
+    local faction = gt("actor_" .. faction_id)
 
-    local rank = gc("st_rank_" .. ranks.get_obj_rank_name(db.actor))
+    local rank = gt("st_rank_" .. ranks.get_obj_rank_name(db.actor))
 
     if self.is_death then
         self.fullDispMsg = exclusionZoneTxt .. " " .. lvlUiName .. "~" .. dateTime .. "~" .. namePrefix .. " " ..
@@ -432,28 +432,19 @@ local valid_mutant_community = {
     psysucker = "psysucker"
 }
 
-local valid_community = {
-    ["stalker"] = "Free Stalker",
-    ["bandit"] = "Bandit",
-    ["csky"] = "Clear Sky",
-    ["dolg"] = "Duty",
-    ["freedom"] = "Freedom",
-    ["army"] = "Military",
-    ["ecolog"] = "Ecologist",
-    ["killer"] = "Mercenary",
-    ["zombied"] = "Zombified Stalker",
-    ["monolith"] = "Monolith",
-    ["greh"] = "Sin",
-    ["isg"] = "UNISG",
-    ["renegade"] = "Renegade"
-}
-
-local cls_id = nil
+local killer_cls_id = nil
 local killer = nil
+local last_anomaly_cls_id = nil
+local last_anomaly = nil
 
 function set_last_killer(killer_obj)
-    cls_id = killer_obj.cls_id
+    killer_cls_id = killer_obj.cls_id
     killer = killer_obj.name
+end
+
+function set_last_anomaly(anomaly_obj)
+    last_anomaly = anomaly_obj.name
+    last_anomaly_cls_id = anomaly_obj.cls_id
 end
 
 function get_mutant_name(mutant_obj)
@@ -465,11 +456,11 @@ function get_mutant_name(mutant_obj)
         return nil
     end
     if mutant_sections[sec] then
-        return gc("tagged_patches_" .. mutant_sections[sec])
+        return gt("tagged_patches_" .. mutant_sections[sec])
     end
     local cmnt = ini_sys:r_string_ex(sec, "community")
     if cmnt and valid_mutant_community[cmnt] then
-        return gc("tagged_patches_" .. valid_mutant_community[cmnt])
+        return gt("tagged_patches_" .. valid_mutant_community[cmnt])
     end
     return nil
 end
@@ -485,11 +476,11 @@ function get_killer_name()
         end
     end
 
-    if cls_id and IsAnomaly(nil, cls_id) then
-        return gc("sis_killer_anomaly")
+    if last_anomaly_cls_id and IsAnomaly(nil, last_anomaly_cls_id) then
+        killer_name = get_anomaly_name()
     end
 
-    return killer_name or gc("sis_killer_unknown")
+    return killer_name or gt("sis_killer_unknown")
 end
 
 function get_killer_faction()
@@ -499,10 +490,22 @@ function get_killer_faction()
     if killer then
         if IsStalker(killer) then
             true_killer_faction = killer:character_community()
-
-            killer_faction = valid_community[true_killer_faction]
+            if true_killer_faction then
+                killer_faction = gt("sis_killer_faction_" .. true_killer_faction)
+            end
         end
     end
 
     return killer_faction
+end
+
+function get_anomaly_name()
+    local anomaly_name = nil
+    if last_anomaly then
+        anomaly_name = gt("sis_killer_anomaly_" .. last_anomaly)
+    else
+        anomaly_name = gt("sis_killer_anomaly")
+    end
+
+    return anomaly_name
 end
