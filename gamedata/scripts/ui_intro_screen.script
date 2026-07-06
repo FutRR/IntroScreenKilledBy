@@ -428,10 +428,12 @@ local valid_mutant_community = {
     psysucker = "psysucker"
 }
 
+local cls_id = nil
 local killer = nil
 
 function set_last_killer(killer_obj)
-    killer = killer_obj
+    cls_id = killer_obj.cls_id
+    killer = killer_obj.name
 end
 
 function get_mutant_name(mutant_obj)
@@ -461,6 +463,10 @@ function get_killer_name()
         elseif IsMonster(killer) then
             killer_name = get_mutant_name(killer)
         end
+    end
+
+    if cls_id and IsAnomaly(nil, cls_id) then
+        return gc("sis_killer_anomaly")
     end
 
     return killer_name or gc("sis_killer_unknown")

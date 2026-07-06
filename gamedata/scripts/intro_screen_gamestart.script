@@ -12,7 +12,10 @@ local INTRO_REASON_SAVE_LOAD = "save_load"
 local INTRO_REASON_LEVEL_CHANGE = "level_change"
 local INTRO_REASON_DEATH = "death"
 
-local last_killer_obj = nil
+local last_killer_obj = {
+    cls_id = nil,
+    name = nil
+}
 
 local function mcm_bool(key, default)
     local cfg = serious_intro_screen_mcm and serious_intro_screen_mcm.get_config
@@ -96,13 +99,23 @@ end
 
 function on_actor_before_hit(s_hit)
     if s_hit and s_hit.draftsman then
-        last_killer_obj = s_hit.draftsman
+        last_killer_obj.name = s_hit.draftsman
+    end
+
+    if s_hit.weapon_id then
+        local wpn_obj = get_object_by_id(s_hit.weapon_id)
+        if wpn_obj then
+            last_killer_obj.cls_id = wpn_obj:clsid()
+        end
     end
 
 end
 
 function on_actor_death()
-    last_killer_obj = nil
+    last_killer_obj = {
+        cls_id = nil,
+        name = nil
+    }
 end
 
 -- Сохраняем состояние флага в сейв

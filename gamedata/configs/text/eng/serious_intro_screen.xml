@@ -112,6 +112,9 @@
     <string id="sis_killer_unknown">
         <text>Unknown</text>
     </string>
+    <string id="sis_killer_anomaly">
+        <text>Anomaly</text>
+    </string>
     <string id="ui_mcm_serious_intro_screen_enable_death_intro">
         <text>Enable intro for Player Death</text>
     </string>
