@@ -8,6 +8,8 @@ This addon basically merges IntroScreen and [Head, Eyes] Death Screen to add the
 
 This is my first time modding Anomaly, so bugs are possible. I have not thoroughly tested it but it should work fine.
 
+Load after the 3 requirements.
+
 ## Requirements
 
 - [Tagged Patches](https://www.moddb.com/mods/stalker-anomaly/addons/tagged-patches) by Utjan (required by eslider's [Head, Eyes] Death Screen code)
