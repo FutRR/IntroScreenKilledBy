@@ -98,14 +98,16 @@ function on_actor_before_death()
 end
 
 function on_actor_before_hit(s_hit)
-    if s_hit and s_hit.draftsman then
-        last_killer_obj.name = s_hit.draftsman
-    end
+    if s_hit then
+        if s_hit.draftsman then
+            last_killer_obj.name = s_hit.draftsman
+        end
 
-    if s_hit.weapon_id then
-        local wpn_obj = get_object_by_id(s_hit.weapon_id)
-        if wpn_obj then
-            last_killer_obj.cls_id = wpn_obj:clsid()
+        if s_hit.weapon_id then
+            local wpn_obj = get_object_by_id(s_hit.weapon_id)
+            if wpn_obj then
+                last_killer_obj.cls_id = wpn_obj:clsid()
+            end
         end
     end
 

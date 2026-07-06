@@ -119,6 +119,9 @@ function UIIntroScreen:Reset(intro_reason)
     local statusTerminated = gc("sis_actor_status_terminated")
     local killerPrefix = gc("sis_killer_prefix")
     local killerName = get_killer_name()
+    local killerFactionPrefix = gc("sis_killer_faction_prefix")
+    local killerFaction = get_killer_faction()
+    local killerFactionSuffix = killerFaction and (killerFactionPrefix .. " " .. killerFaction) or ""
 
     local faction_id = get_actor_true_community()
     local faction = gc("actor_" .. faction_id)
@@ -128,14 +131,15 @@ function UIIntroScreen:Reset(intro_reason)
     if self.is_death then
         self.fullDispMsg = exclusionZoneTxt .. " " .. lvlUiName .. "~" .. dateTime .. "~" .. namePrefix .. " " ..
                                actorName .. "~" .. statusPrefix .. " " .. statusTerminated .. "~" .. killerPrefix .. " " ..
-                               killerName
+                               killerName .. " " .. killerFactionSuffix
     else
         self.fullDispMsg = exclusionZoneTxt .. " " .. lvlUiName .. "~" .. dateTime .. "~" .. namePrefix .. " " ..
                                actorName .. "~" .. rankPrefix .. " " .. rank .. "~" .. factionPrefix .. " " .. faction
     end
 
     if self.is_death then
-        self.txt:SetText(statusPrefix .. " " .. statusTerminated .. "~" .. killerPrefix .. " " .. killerName)
+        self.txt:SetText(statusPrefix .. " " .. statusTerminated .. "~" .. killerPrefix .. " " .. killerName .. " " ..
+                             killerFactionSuffix)
     else
         self.txt:SetText(rankPrefix .. " " .. rank .. "~" .. factionPrefix .. " " .. faction)
     end
@@ -428,6 +432,22 @@ local valid_mutant_community = {
     psysucker = "psysucker"
 }
 
+local valid_community = {
+    ["stalker"] = "Free Stalker",
+    ["bandit"] = "Bandit",
+    ["csky"] = "Clear Sky",
+    ["dolg"] = "Duty",
+    ["freedom"] = "Freedom",
+    ["army"] = "Military",
+    ["ecolog"] = "Ecologist",
+    ["killer"] = "Mercenary",
+    ["zombied"] = "Zombified Stalker",
+    ["monolith"] = "Monolith",
+    ["greh"] = "Sin",
+    ["isg"] = "UNISG",
+    ["renegade"] = "Renegade"
+}
+
 local cls_id = nil
 local killer = nil
 
@@ -470,5 +490,19 @@ function get_killer_name()
     end
 
     return killer_name or gc("sis_killer_unknown")
+end
 
+function get_killer_faction()
+    local true_killer_faction = nil
+    local killer_faction = nil
+
+    if killer then
+        if IsStalker(killer) then
+            true_killer_faction = killer:character_community()
+
+            killer_faction = valid_community[true_killer_faction]
+        end
+    end
+
+    return killer_faction
 end

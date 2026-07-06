@@ -109,6 +109,9 @@
     <string id="sis_killer_prefix">
         <text>Killed by:</text>
     </string>
+    <string id="sis_killer_faction_prefix">
+        <text>-</text>
+    </string>
     <string id="sis_killer_unknown">
         <text>Unknown</text>
     </string>
