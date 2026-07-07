@@ -1,8 +1,8 @@
 -- =============================================================
 -- Serious Intro Screen
 -- File purpose: documented by ChatGPT
--- This file contains runtime logic for the intro system.
--- Comments added for maintainability.
+-- This file contains the runtime logic for the intro system.
+-- Comments are included for maintainability.
 -- =============================================================
 -- Handles game events (save load, level change, death)
 -- and decides when the intro should be shown.
@@ -52,6 +52,7 @@ local function is_intro_enabled_for(reason)
 end
 
 -- Ребилд бай Килиманджаро. Функция, которая "поднимает флаг" перед сменой уровня
+-- Rebuild by Kilimanjaro. Sets the flag before a level change.
 function on_level_travel()
     is_traveling = true
 end
@@ -61,16 +62,24 @@ end
 -- Разница передается во второй скрипт через параметр start(intro_reason):
 -- "save_load"    = обычная загрузка сейва, затемнение остается;
 -- "level_change" = переход между локациями, затемнения и фона нет.
+
+-- Main intro display function.
+-- The intro now works both for a normal save load and for a transition between locations.
+-- The difference is passed to the second script through start(intro_reason):
+-- "save_load"    = normal save load, the fade remains;
+-- "level_change" = moving between locations, no fade or background.
 function ShowIntroText()
     local traveling_now = is_traveling or false
     local intro_reason = traveling_now and INTRO_REASON_LEVEL_CHANGE or INTRO_REASON_SAVE_LOAD
 
     -- Сбрасываем флаг сразу после чтения, чтобы следующая обычная загрузка снова была с затемнением.
+    -- Reset the flag immediately after reading it so the next normal load uses the fade again.
     if is_traveling then
         is_traveling = false
     end
 
     -- MCM позволяет отдельно отключать интро для загрузки сейва и для смены локации.
+    -- MCM lets us disable the intro separately for save loads and level transitions.
     if not is_intro_enabled_for(intro_reason) then
         return
     end
@@ -78,17 +87,28 @@ function ShowIntroText()
     -- ui_intro_screen.start() сам показывает окно через Trigger().
     -- Важно: не вызываем ShowDialog(true) отсюда, иначе при переходе между локациями
     -- окно снова станет modal/dialog и перехватит мышь.
+
+    -- ui_intro_screen.start() shows the window through Trigger() on its own.
+    -- Important: do not call ShowDialog(true) here, or during a level transition
+    -- the window will become modal/dialog again and capture the mouse.
     if ui_intro_screen then
         ui_intro_screen.start(intro_reason)
     end
 
     -- Этот коллбэк больше не нужен после первого показа, но его удаление опционально
     -- и не влияет на основную логику, так как флаг is_traveling всё контролирует.
+
+    -- This callback is no longer needed after the first display, but removing it is optional
+    -- and does not affect the main logic because the is_traveling flag controls everything.
+
     -- UnregisterScriptCallback("on_loading_screen_dismissed", ShowIntroText)
 end
 
 -- Интро смерти игрока. Используем отдельную причину, чтобы UI мог собрать
 -- отдельный набор строк и работать через тот же non-modal overlay, что и смена локации.
+
+-- Player death intro. We use a separate reason so the UI can assemble
+-- a different set of lines and use the same non-modal overlay as a level transition.
 function on_actor_before_death()
     local intro_reason = INTRO_REASON_DEATH
 
@@ -103,6 +123,7 @@ function on_actor_before_death()
     end
 end
 
+-- Grabs information about the last killer and weapon before the actor dies.
 function on_actor_before_hit(s_hit)
     if s_hit then
         if s_hit.draftsman then
@@ -118,6 +139,7 @@ function on_actor_before_hit(s_hit)
     end
 end
 
+-- Grabs information about the last anomaly before the actor feels it.
 function on_actor_feeling_anomaly(obj)
     if obj then
         last_anomaly_obj.cls_id = obj:clsid()
@@ -135,6 +157,7 @@ function on_actor_feeling_anomaly(obj)
     end
 end
 
+-- Resets information about the last killer and anomaly when the actor dies.
 function on_actor_death()
     last_killer_obj = {
         cls_id = nil,
@@ -147,16 +170,19 @@ function on_actor_death()
 end
 
 -- Сохраняем состояние флага в сейв
+-- Save the flag state into the save file.
 function save_state(m_data)
     m_data.sis_is_traveling = is_traveling or false
 end
 
 -- Загружаем состояние флага из сейва
+-- Load the flag state from the save file.
 function load_state(m_data)
     is_traveling = m_data.sis_is_traveling or false
 end
 
 -- Регистрируем все необходимые коллбэки
+-- Register all required callbacks.
 function on_game_start()
     RegisterScriptCallback("on_loading_screen_dismissed", ShowIntroText)
     RegisterScriptCallback("on_before_level_changing", on_level_travel)
