@@ -497,7 +497,7 @@ function get_killer_name()
         end
     end
 
-    if last_anomaly_cls_id and IsAnomaly(nil, last_anomaly_cls_id) then
+    if cls_id and IsAnomaly(nil, cls_id) then
         killer_name = get_anomaly_name()
     end
 
