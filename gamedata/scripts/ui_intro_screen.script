@@ -456,11 +456,11 @@ function get_mutant_name(mutant_obj)
         return nil
     end
     if mutant_sections[sec] then
-        return gt("tagged_patches_" .. mutant_sections[sec])
+        return gt("sis_killer_mutant_" .. mutant_sections[sec])
     end
     local cmnt = ini_sys:r_string_ex(sec, "community")
     if cmnt and valid_mutant_community[cmnt] then
-        return gt("tagged_patches_" .. valid_mutant_community[cmnt])
+        return gt("sis_killer_mutant_" .. valid_mutant_community[cmnt])
     end
     return nil
 end
