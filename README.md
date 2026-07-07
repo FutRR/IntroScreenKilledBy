@@ -24,3 +24,4 @@ Load after the 2 requirements.
 - 0.1 (Release) : Added killer name for NPCs and Mutants
 - 0.2 : Added killer faction
 - 0.3 : Added anomaly type + moved killer faction text to xml file
+- 0.4 : Tagged Patches no longer needed (moved mutant strings to sis xml file)
