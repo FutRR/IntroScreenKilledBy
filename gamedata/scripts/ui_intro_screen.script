@@ -29,6 +29,9 @@ function start(intro_reason)
         -- IMPORTANT для переходов между локациями:
         -- регистрируем UI ДО показа. Тогда окно можно показать как обычный overlay
         -- через Show(true), без ShowDialog(true), а значит без курсора и без захвата мыши.
+        -- IMPORTANT for transitions between locations:
+        -- register the UI BEFORE showing it. Then the window can be shown as a normal overlay
+        -- through Show(true), without ShowDialog(true), which means no cursor and no mouse capture.
         Register_UI("UIIntroScreen", "intro_screen")
         GUI:Trigger()
     end
@@ -55,6 +58,7 @@ function UIIntroScreen:InitControls()
 
     self.dialog = xml:InitStatic("intro", self)
     -- Управление всегда остается у игрока.
+    -- Control always stays with the player.
     self:AllowMovement(true)
     self.bgTexture = xml:InitStatic("intro:background", self.dialog)
     self.txt = xml:InitTextWnd("intro:txt", self.dialog)
@@ -63,6 +67,8 @@ end
 function UIIntroScreen:Reset(intro_reason)
     -- Поддерживаем старый bool-параметр на случай сторонних вызовов:
     -- true = смена локации, false/nil = загрузка сейва.
+    -- Support the old bool parameter for external calls:
+    -- true = level transition, false/nil = save load.
     if intro_reason == true then
         intro_reason = INTRO_REASON_LEVEL_CHANGE
     elseif intro_reason == false or intro_reason == nil then
@@ -106,6 +112,7 @@ function UIIntroScreen:Reset(intro_reason)
     self.snd_typing = sound_object(typing_sound_path)
 
     -- Повторно гарантируем, что окно не блокирует управление после Reset().
+    -- We re-ensure that the window does not block control after Reset().
     self:AllowMovement(true)
 
     local exclusionZoneTxt = gt("sis_exclusion_zone_txt")
@@ -147,6 +154,8 @@ function UIIntroScreen:Reset(intro_reason)
 
     -- Обычная загрузка сейва: затемнение/фон остается.
     -- Переход между локациями и смерть игрока: фон полностью скрыт, остается только текст поверх игры.
+    -- Normal save load: the fade/background stays.
+    -- Level transitions and player death: the background is fully hidden, only text remains over the game.
     if self.is_traveling or self.is_death then
         self.bgTexture:SetTextureColor(GetARGB(0, 255, 255, 255))
         self.bgTexture:Show(false)
@@ -157,6 +166,8 @@ function UIIntroScreen:Reset(intro_reason)
 
     -- На переходах между локациями сдвигаем текст левее для ультравайда.
     -- При обычной загрузке сейва оставляем исходную позицию из ui_intro_screen_16.xml.
+    -- During level transitions, shift the text left for ultrawide screens.
+    -- For a normal save load, keep the original position from ui_intro_screen_16.xml.
     if self.is_traveling then
         self.txt:SetWndPos(vector2():set(220, 273))
     else
@@ -170,6 +181,7 @@ function UIIntroScreen:Update()
     CUIScriptWnd.Update(self)
 
     -- Save/Load: прячем курсор грязным, но стабильным хаком — каждый кадр уводим его за экран.
+    -- Save/Load: hide the cursor with a dirty but stable hack - move it off-screen every frame.
     if self.intro_reason == INTRO_REASON_SAVE_LOAD and SetCursorPosition then
         pcall(function()
             SetCursorPosition(vector2():set(0, 1000))
@@ -178,6 +190,8 @@ function UIIntroScreen:Update()
 
     -- При переходе между локациями окно показывается как dialog, чтобы текст точно был виден,
     -- но каждый кадр возвращаем input игре, чтобы камера/мышь не блокировались.
+    -- During level transitions, the window is shown as a dialog so the text is definitely visible,
+    -- but every frame we return input to the game so the camera/mouse are not blocked.
     if self.use_hud_render and level and level.enable_input then
         pcall(level.enable_input)
     end
@@ -186,6 +200,8 @@ end
 function UIIntroScreen:TypeTxt()
     -- При переходе между локациями и смерти игрока не показываем затемняющий фон.
     -- При загрузке сейва оставляем оригинальное затемнение.
+    -- During level transitions and player death, do not show the darkening background.
+    -- For save loading, keep the original fade.
     if self.is_traveling or self.is_death then
         self.bgTexture:Show(false)
     else
@@ -199,6 +215,8 @@ function UIIntroScreen:Trigger()
     if self.use_hud_render then
         -- Смена локации и смерть игрока: рисуем окно через HUD render-слой.
         -- Это не открывает UI-dialog, поэтому не появляется курсор и мышь остается у камеры.
+        -- Level transitions and player death: draw the window through the HUD render layer.
+        -- This does not open a UI dialog, so no cursor appears and the mouse stays with the camera.
         self:AllowMovement(true)
         self:Enable(true)
         self:Show(true)
@@ -216,6 +234,8 @@ function UIIntroScreen:Trigger()
 
         -- Fallback только на случай, если в конкретной сборке нет AddDialogToRender.
         -- В GAMMA/Anomaly этот метод обычно есть, и именно он нужен для текста без захвата мыши.
+        -- Fallback only in case a specific build does not have AddDialogToRender.
+        -- In GAMMA/Anomaly this method is usually available, and it is what is needed for text without mouse capture.
         if not self.added_to_hud_render then
             self:ShowDialog(true)
         end
@@ -225,6 +245,7 @@ function UIIntroScreen:Trigger()
         end
     else
         -- Обычная загрузка сейва: оставляем полноценное интро с затемнением.
+        -- Normal save load: keep the full intro with fading.
         self:Enable(true)
         self:ShowDialog(true)
     end
@@ -456,11 +477,11 @@ function get_mutant_name(mutant_obj)
         return nil
     end
     if mutant_sections[sec] then
-        return gt("tagged_patches_" .. mutant_sections[sec])
+        return gt("sis_killer_mutant_" .. mutant_sections[sec])
     end
     local cmnt = ini_sys:r_string_ex(sec, "community")
     if cmnt and valid_mutant_community[cmnt] then
-        return gt("tagged_patches_" .. valid_mutant_community[cmnt])
+        return gt("sis_killer_mutant_" .. valid_mutant_community[cmnt])
     end
     return nil
 end
@@ -476,7 +497,7 @@ function get_killer_name()
         end
     end
 
-    if last_anomaly_cls_id and IsAnomaly(nil, last_anomaly_cls_id) then
+    if cls_id and IsAnomaly(nil, cls_id) then
         killer_name = get_anomaly_name()
     end
 

@@ -100,16 +100,18 @@
         <text>Enable intro for Level Change</text>
     </string>
 
+    <!-- Strings for actor status labels -->
     <string id="sis_actor_status_prefix">
         <text>Status:</text>
     </string>
     <string id="sis_actor_status_terminated">
         <text>Terminated</text>
     </string>
+
+    <!-- Strings for killer faction labels -->
     <string id="sis_killer_prefix">
         <text>Killed by:</text>
     </string>
-
     <string id="sis_killer_faction_prefix">
         <text>-</text>
     </string>
@@ -152,7 +154,72 @@
     <string id="sis_killer_faction_renegade">
         <text>Renegade</text>
     </string>
+    <!-- Strings for mutant labels -->
+    <string id="sis_killer_mutant_chimera">
+        <text>Chimera</text>
+    </string>
+    <string id="sis_killer_mutant_poltergeist">
+        <text>Poltergeist</text>
+    </string>
+    <string id="sis_killer_mutant_pseudogeist">
+        <text>Pseudogeist</text>
+    </string>
+    <string id="sis_killer_mutant_pyrogeist">
+        <text>Pyrogeist</text>
+    </string>
+    <string id="sis_killer_mutant_psydog">
+        <text>Psydog</text>
+    </string>
+    <string id="sis_killer_mutant_blind_dog">
+        <text>Blind Dog</text>
+    </string>
+    <string id="sis_killer_mutant_flesh">
+        <text>Flesh</text>
+    </string>
+    <string id="sis_killer_mutant_bloodsucker">
+        <text>Bloodsucker</text>
+    </string>
+    <string id="sis_killer_mutant_boar">
+        <text>Boar</text>
+    </string>
+    <string id="sis_killer_mutant_burer">
+        <text>Burer</text>
+    </string>
+    <string id="sis_killer_mutant_cat">
+        <text>Cat</text>
+    </string>
+    <string id="sis_killer_mutant_controller">
+        <text>Controller</text>
+    </string>
+    <string id="sis_killer_mutant_fracture">
+        <text>Fracture</text>
+    </string>
+    <string id="sis_killer_mutant_karlik">
+        <text>Karlik</text>
+    </string>
+    <string id="sis_killer_mutant_pseudodog">
+        <text>Pseudodog</text>
+    </string>
+    <string id="sis_killer_mutant_pseudogiant">
+        <text>Pseudogiant</text>
+    </string>
+    <string id="sis_killer_mutant_snork">
+        <text>Snork</text>
+    </string>
+    <string id="sis_killer_mutant_tushkano">
+        <text>Tushkano</text>
+    </string>
+    <string id="sis_killer_mutant_zombie">
+        <text>Zombie</text>
+    </string>
+    <string id="sis_killer_mutant_lurker">
+        <text>Lurker</text>
+    </string>
+    <string id="sis_killer_mutant_psysucker">
+        <text>Psysucker</text>
+    </string>
 
+    <!-- Strings for anomaly labels -->
     <string id="sis_killer_anomaly">
         <text>Anomaly</text>
     </string>
